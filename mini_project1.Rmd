@@ -1,0 +1,83 @@
+---
+title: "Coronavirus Exploratory Data Analysis"
+author: "Hayat Hussein"
+date: "2024-03-11"
+output: html_document
+---
+
+# Introduction 
+Covid-19 or more formally known as the Coronavirus is an infectious disease that has been caused by the SARS-CoV2 virus. This virus spreads by liquid particles traveling through the air through people coughing, sneezing, speaking, or breathing. This virus can travel from person to person by an infected person’s mouth, or nose. The symptoms of this virus include “fever, cough, tiredness, loss of taste and smell, sore throat, and headaches” (WHO 2024). Preventative measures that can be taken to prevent covid-19 are receiving vaccination, social distancing from one another, wearing a mask, washing your hands regularly, and isolating from others when feeling sick. Communities at a higher risk of this disease include older people, people with cardiovascular and chronic diseases, cancer, and diabetes. Other communities at risk include “People who are immunocompromised, have certain disabilities, or have underlying health conditions” (CDC 2023). 
+
+# Data Cleaning/Preparation
+The data cleaning and preparation steps taken to prepare the data set include importing the coronavirus and comorbid excel sheets. After importing the sheets, I next merged the two data sets, keeping all columns and rows they both had using the full join statement. After that, I re-coded ages equal to or greater than 120 to NA in order to make the dataset more efficient and remove any outliers that might skew the data. Finally, I re-coded the ‘Mainland China’ value to ‘China’ in order to keep consistent records throughout the data. By taking these measures, I was able to fix errors and have consistent data throughout the code as well as ensure the efficiency of my code. 
+
+```{r}
+# import libraries
+library(dplyr)
+library(readxl)
+
+coronavirus <- read_excel("coronavirus.xlsx")
+comorbidity <- read_excel("comorbidity.xlsx")
+
+
+# merge the two datasets 
+full_j <- full_join(coronavirus, comorbidity, by="ID")
+str(full_j)
+
+# recoding age 120>=
+full_j$Age[full_j$Age >=120] <- NA
+
+str(full_j)
+
+# recoding values of Mainland China to China
+full_j <- mutate(full_j, Country = ifelse(Country == "Mainland China", "China", Country))
+
+table(full_j$Country)
+```
+
+# Exploratory Data Analysis
+In the Exploratory Data Analysis section, the data consisted of  1783 observations and 12 variables. 49.9% of patients in this dataset were female. 29 represents the median age of patients who have coronavirus. 28.4 is the mean age of patients who have died from coronavirus and 15.9 is the standard deviation. Among the patients who had coronavirus, 51.1% were from China, 0.5% were from Italy, and 10% were from the US. The comorbidities associated with patients who have coronavirus include heart disease with 3.9%, HIV with 7.5%, Liver Disease with 1.9%, Lupus with 15.3%. No comorbidities associated with patients who have the coronavirus were 71.3%
+
+```{r}
+# finding the number of observations 
+nrow(full_j)
+
+# finding the number of variables 
+select(full_j)
+colnames(full_j)
+
+# percentage of patients that are female
+prop.table(table(full_j$Sex == 'F'))['TRUE']*100
+
+# median age of patients who have coronavirus 
+median(full_j$Age, na.rm = T)
+
+# mean age and sd of patients who died from coronavirus
+mean(full_j$Age[full_j$Death == TRUE], na.rm = T)
+sd(full_j$Age[full_j$Death == TRUE], na.rm = T)
+
+# among patients who have covid, what percentage are from each of the following countries: China, Italy, and the US
+China <- prop.table(table(full_j$Country[full_j$CoronaVirus ==TRUE] == 'China')) ['TRUE'] *100
+table(China)
+
+Italy <- prop.table(table(full_j$Country[full_j$CoronaVirus ==TRUE] == 'Italy')) ['TRUE'] *100
+table(Italy)
+
+US <- prop.table(table(full_j$Country[full_j$CoronaVirus ==TRUE] == 'US')) ['TRUE'] *100
+table(US)
+
+# comorbidities associated with patients who have coronavirus
+ prop.table(table(full_j$Comorbidity[full_j$CoronaVirus ==TRUE]))*100
+
+```
+# Data Visualization
+The boxplot illustrates a pink boxplot that compares the Age distribution by the Coronavirus variable, comparing the people who have the virus and those who do not have the virus by their ages. The x-axis represents the Age and the y-axis represents whether or not the patient has the CoronaVirus (1 if the patient has, 0 if the patient does not). This boxplot is presented horizontally. 
+
+```{r}
+boxplot(full_j$Age~full_j$CoronaVirus, main="Age Distribution by Coronavirus Variable", xlab="Age", ylab="CoronaVirus", col="pink", horizontal = TRUE)
+```
+
+# References 
+Centers for Disease Control and Prevention. (2023). About COVID-19. Centers for Disease Control and Prevention. https://www.cdc.gov/coronavirus/2019-ncov/your-health/about-covid-19.html
+
+WHO. (2021). Coronavirus Disease (COVID-19). World Health Organization. https://www.who.int/health-topics/coronavirus#tab=tab_1

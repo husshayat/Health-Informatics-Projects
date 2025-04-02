@@ -1,0 +1,116 @@
+---
+title: "Logistic Regression - Predicting Diabetes Diagnosis"
+author: "Hayat Hussein"
+subtitle: "Date: May 13 2024 "
+output: html_document
+---
+## Data Cleaning/Preparation
+In the Data Cleaning/Preparation part of this project, I first imported the necessary packages for this project such as ggplot2, questionr, dplyr, and Hmisc. I then set my working directory to the INST 452 folder that contained the diabetes.csv that I imported. I then created the height.si variable by multiplying the height variable by 0.0254 through mutate, and created the weight.si variable by multiplying it by 0.453592. After, I created the BMI variable by using the BMI = (weight.si)/(height.si2) formula through the new created variables. Lastly, I recoded a new variable named bmi_categorized to create 4 different conditions (underweight, normal, overweight, and obese). Other values were recoded to NA. I also recoded the insurance variable to include whether or not patients had insurance, government insurance, or private insurance. The smoking variable was also recoded to reflect 3 values of current smokers,individuals who have never smoked, and ex-smokers. After recoding and creating variables, I checked my work using the summary and table functions.
+```{r warning=FALSE, message=FALSE, results="hide"}
+# insert import & data cleaning code here
+# import packages
+library(ggplot2)
+library(questionr)
+library(dplyr)
+library(Hmisc)
+# setting working directory
+setwd("/Users/hayathussein/Desktop/INST 452")
+
+# import file
+diab <- read.csv("diabetes.csv")
+
+# creating height.si variable 
+diab <- mutate(diab, height.si = height * 0.0254)
+
+# check work 
+summary(diab$height.si)
+
+# creating weight.si variable
+diab <- mutate(diab, weight.si = weight * 0.453592)
+
+# check work 
+summary(diab$weight.si)
+
+#creating BMI variable 
+diab <- mutate(diab, BMI = (weight.si/height.si^2))
+
+# check work 
+summary(diab$BMI)
+
+# creating BMI categorized variable 
+diab <- mutate(diab, bmi_categorized = ifelse(BMI< 18.5, "underweight",
+                                   ifelse(BMI >= 18.5 & BMI <= 25, "normal",
+                                          ifelse(BMI > 25 & BMI <= 30, "overweight",
+                                                 ifelse(BMI > 30, "obese", NA)))))
+# check work
+table(diab$bmi_categorized)
+
+# recode insurance variable 
+diab <- diab %>% mutate(insurance = ifelse(diab$insurance == 0, "none",
+                           ifelse(diab$insurance == 1, "government",
+                           ifelse(diab$insurance == 2, "private", insurance))))
+# check recode
+table(diab$insurance)
+
+# recode smoking variable 
+diab <- diab %>% mutate(smoking = ifelse(diab$smoking == 1, "current",
+                           ifelse(diab$smoking == 2, "never",
+                           ifelse(diab$smoking == 3, "ex-smoker", smoking))))
+# check recode
+table(diab$smoking)
+```
+
+
+## Exploratory Data Analysis
+This dataset contains 403 observations. In the bmi_categorized variable, the percentage of individuals who are obese is 38%. In the gender variable, the percentage of individuals who are female is 58%. In the has diabetes variable, the percentage of individuals who have diabetes is 15%. The mean values for the continuous variables are 46.85 for age and 28.79 for bmi.
+```{r warning=FALSE, message=FALSE, results="hide"}
+# insert exploratory data analysis code here
+# number of observations 
+nrow(diab)
+# percentage of observations in each bmi_categorized category
+prop.table(table(diab$bmi_categorized))*100
+# percentage of observations in each gender category
+prop.table(table(diab$gender))*100
+# percentage of observations in each diabetes category
+prop.table(table(diab$dm))*100
+# average age of individuals 
+mean(diab$age, na.rm = T)
+# average BMI of individuals
+mean(diab$BMI, na.rm = T)
+```
+
+
+
+## Data Visualization
+Barchart #1 displays that individuals with government provided insurance have the highest frequency compared to the other types of insurance. Barchart #2 displays that individuals who have never smoked has the highest frequency compared to the other types of smokers. Scatterplot #3 shows a weak linear relationship between the body mass index variable and the cholesterol variable. Histogram #4 shows the highest peak in the age variable, between individuals ages 25 through 50. 
+```{r warning=FALSE, message=FALSE}
+# insert logistic regression code
+# insurance bar chart 
+ggplot(data=diab) + aes(x=insurance, fill=insurance) + geom_bar()+
+   labs(title="Frequency of Insurance Variable #1",x="Type of Insurance", y="Count of Insurance Types") + theme(plot.title = element_text(hjust = 0.5))
+
+# smoking bar chart  
+ggplot(data=diab) + aes(x=smoking, fill=smoking) + geom_bar()+
+   labs(title="Frequency of Smoking Variable #2",x="Smoking Types", y="Count of Smoking Types") + theme(plot.title = element_text(hjust = 0.5))
+
+# scatterplot showing the relationship between BMI and Cholesterol 
+ggplot(data=diab) + aes(x=BMI, y=chol) + geom_point() +  geom_smooth(method=lm) +
+   labs(title="Relationship Between BMI and Cholesterol of Individual #3",x="Body Mass Index", y="Cholesterol of Individual") + theme(plot.title = element_text(hjust = 0.5))
+
+# calculate the correalation coefficient 
+cor.test(diab$BMI, diab$chol, method = "pearson", conf.level = 0.95)
+
+# histogram of age variable
+ggplot(data=diab) + aes(x=age) + geom_histogram(fill="khaki3", color="khaki4", binwidth = 5)+
+   labs(title="Distribution of Age #4",x="Age of Individual", y="Counts of Ages of Individuals") + theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+## Logistic Regression Results
+A 1-year increase in age causes the log odds of diabetes to increase by 0.055454, holding the other independent variables constant. A change in the gender from female to male increases the log odds of diabetes by 0.244852, holding all other variables constant. A 1-unit increase in BMI causes the log odds of diabetes to increase by 0.073879, holding all the other independent variables constant. 
+```{r warning=FALSE, message=FALSE, results="hide"}
+fit1 <- glm(dm ~ age + factor(gender) + BMI, data = diab, family = "binomial")
+
+summary(fit1)
+```
+

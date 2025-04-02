@@ -1,0 +1,100 @@
+---
+title: "Mini Project 2"
+author: "Hayat Hussein"
+date: "2024-04-15"
+output: html_document
+---
+
+# Introduction
+The research question we are examining is whether the number of days physical health was not good is greater in males, compared to females. This research is important to study, because we need to discover if there are factors that contribute to a specific sexes physical health. We also need to determine if there is a significant difference in the number of days physical health was not good in males than in females. By discovering this data, we may be able to address the health issues presented in males if true, and use resources to address the large gap. 
+
+This research may impact people such as healthcare providers, administrators, researchers, and patients, as this data may be used to create improvement within the healthcare community. This data can be used to improve patient outcomes, address patient needs, allow researchers to study health disparities presented within data, and allow patients to be informed and strengthen their health information behavior patterns. Primary stakeholders include healthcare professionals that are involved with this data firsthand, as well as healthcare administrators that have the power to allocate resources to different people depending on results. Secondary stakeholders include research groups who study the data outcomes and identify key findings 
+within their research. 
+
+The results will impact patient care in an institutional setting by improving and enhancing efficacy within clinical trials, supporting various intervention methods, and creating significant discoveries created within health research. By this study, we can identify key factors in physical health, and whether or not there is a greater difference in the number of days males have not good physical health days compared to females. In a research article authored by Nass from the Institute of Medicine, the researcher asserts that, “Collectively, these forms of health research have led to significant discoveries, the development of new therapies, and a remarkable improvement in health care and public health” (Nass 2009). This displays the impact this research question will have amongst the health community. 
+
+# Data Cleaning & Exploratory Data Analysis
+
+The data that is being used for this analysis is the Behavioral Risk Factor Surveilliance System  from the year 2010, and the type of data source is a health related telephone survey. The first step I took was making sure the appropriate packages were installed and then importing the necessary packages for this data. I then imported the brfss data and verified the variable recodings worked by using cross tabs. The dataset consisted of 3260 observations and 397 variables. 59 is the mean of the physical health variable. 69% of the patients in the dataset were female and 31% of patients in the dataset were males. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo =FALSE, results= 'hide', warning = FALSE, message = FALSE)
+
+```
+
+```{r}
+# Check if required packages are not already installed 
+packages <- c("ggplot2", "questionr","shiny")
+
+new_packages <- packages[!packages %in% installed.packages()]
+if (length(new_packages) > 0) {
+  install.packages(new_packages)
+}
+
+# import packages
+library(ggplot2)
+library(questionr)
+library(dplyr)
+
+
+setwd("/Users/hayathussein/Desktop/INST 452")
+
+# import file
+brfss <- read.csv("BRFSS.csv")
+
+#number of observations and variables in the dataframe 
+dim(brfss)
+
+#recoding values of "Number of Days Physical Health Not Good" variable 
+PHYSHLTH <- mutate(brfss, PHYSHLTH =
+                 ifelse(PHYSHLTH %in% c(88,77,99, " "), NA,
+                 brfss$PHYSHLTH))
+
+#checking recoded values 
+table(brfss$PHYSHLTH)
+
+#recoding sex variable to "male" and "female"
+brfss <- brfss %>% mutate(SEX2 = 
+                 ifelse(SEX ==1, "Male", 
+                        ifelse(SEX==2, "Female", NA)))
+#checking recoded variable
+table(brfss$SEX, brfss$SEX2)
+
+#find the mean of "Number of Days Physical Health Not Good" variable
+mean(brfss$PHYSHLTH, na.rm = T)
+
+#find the percentages of males and females in the data 
+prop.table(table(brfss$SEX2))*100
+
+```
+
+
+# Data Visualization
+The shape of the histogram presented in the data is left-skewed. In the plot, females had a less number of days where their physical health was not good (less than 25 days), compared to males (greater than 25 days).  
+```{r}
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+
+#histogram for "Number of Days Physical Health Not Good" variable
+ggplot(data=brfss) + aes(x=PHYSHLTH) + geom_histogram(fill="darkkhaki", color="olivedrab4", binwidth = 5)+
+   labs(title="Distribution of Number of Days Physical Health Not Good",x="Number of Days Physical Health Not Good") + theme(plot.title = element_text(hjust = 0.5))
+
+#graph/plot of the difference in the five-number summary of the "Number of Days Physical Health Not Good" variable, by the SEX2 variable 
+
+ggplot(data=brfss) + aes(x=SEX2, y=PHYSHLTH, fill=SEX2) +  geom_boxplot()+
+   labs(title="Boxplot Distribution of Number of Days Physical Health Not Good , by Sex", x="SEX", y="Number of Days Physical Health Not Good", fill="SEX") + theme(plot.title = element_text(hjust = 0.5))
+```
+
+# Hypothesis Test
+The null hypothesis is the the Number of Days Physical Health was Not Good between males and females is the same. The alternative hypothesis is the Number of Days Physical Health was Not Good is greater in males, compared to females. The alpha is set at 0.05 and the type of test s upper tailed. The p-value is 0.0003965.
+```{r}
+#conducting a hypothesis test 
+physhlth_male <- brfss$PHYSHLTH[brfss$SEX2 == "Male"]
+physhlth_female <- brfss$PHYSHLTH[brfss$SEX2 == "Female"]
+
+t.test(physhlth_male, physhlth_female, alternative = "greater")
+```
+# Conclusion
+At a significance level of 0.05, we can reject the null hypothesis and conclude that there is statistically significant evidence that the mean number of days physical health was not good 
+is greater in males compared to females. The results of this analysis may be used by health practitioners by identifying key patterns that may contribute to males physical health, and assess according to the information presented. Professionals can use their newly founded knowledge to address the needs of male patients attentively and improve male patients' health. Patients can use the information concluded by educating themselves on key factors that may contribute to male physical health and take preventative action against negative factors causing this effect. The results of the analysis are what I expected, because the female survey responses were significantly greater than the males, and males are more prone to having poor health. Future research that can be done to expand on this analysis is categorizing the surveys by age and race to determine which age group and race have the number of days where their physical health is not good. This will examine different key factors, such as racial disparity and health status of different age groups. 
+ 
